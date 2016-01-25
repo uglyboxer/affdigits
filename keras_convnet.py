@@ -1,8 +1,11 @@
-from keras.datasets import mnist
+import csv
+# from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.utils import np_utils
+
+import pandas as pd
 
 import theano
 print(theano.config.device)
@@ -11,7 +14,10 @@ import numpy as np
 from affnist_read import loadmat
 from tqdm import trange
 
-(X_train, y_train), (X_test, y_test) = mnist.load_data()
+from img_handler import downsize
+
+
+# (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
 dataset = loadmat('1.mat')
 y_train = dataset['affNISTdata']['label_int']
@@ -20,7 +26,7 @@ X_train = dataset['affNISTdata']['image'].transpose()
 for i in trange(8):
     dataset1 = loadmat(str(i+1) + '.mat')
     y_train1 = dataset1['affNISTdata']['label_int']
-    X_train1 = dataset1['affNISTdata']['image'].transpose() 
+    X_train1 = dataset1['affNISTdata']['image'].transpose()
 
     X_train = np.vstack((X_train, X_train1))
     y_train = np.hstack((y_train, y_train1))
@@ -36,11 +42,11 @@ Get to 99.25% test accuracy after 12 epochs (there is still a lot of margin for 
 '''
 
 import os
-os.environ['THEANO_FLAGS']='mode=FAST_RUN,device=gpu,floatX=float32'
+os.environ['THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32'
 
 np.random.seed(1337)  # for reproducibility
 
-batch_size = 1280
+batch_size = 128
 nb_classes = 10
 nb_epoch = 12
 
@@ -93,5 +99,24 @@ model.compile(loss='categorical_crossentropy', optimizer='adadelta')
 model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch,
           show_accuracy=True, verbose=1, validation_data=(X_test, Y_test))
 score = model.evaluate(X_test, Y_test, show_accuracy=True, verbose=0)
-print('Test score:', score[0])
-print('Test accuracy:', score[1])
+
+f = open('report.txt', 'w')
+f.write('Test score:', score[0])
+f.write('Test accuracy:', score[1])
+f.close()
+
+
+# parse Kaggle test set data
+with open('test.csv', 'r') as f:
+    reader = csv.reader(f)
+    raw_nums = list(reader)
+    test_set = [np.array([int(x) for x in y]) for y in raw_nums[1:]]
+testX = []
+for i, x in enumerate(test_set):
+    testX.append(downsize(x, 28, 40))
+
+
+# Output Kaggle guess list
+testY = model.predict_classes(testX, verbose=2)
+
+pd.DataFrame({"ImageId": list(range(1,len(testY)+1)), "Label": testY}).to_csv('submission.csv', index=False, header=True)
