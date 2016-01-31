@@ -19,19 +19,19 @@ from img_handler import downsize
 
 # (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
-dataset = loadmat('1.mat')
+dataset = loadmat('../data/1.mat')
 y_train = dataset['affNISTdata']['label_int']
 X_train = dataset['affNISTdata']['image'].transpose()
 
 for i in trange(15):
-    dataset1 = loadmat(str(i+1) + '.mat')
+    dataset1 = loadmat('../data/' + str(i+1) + '.mat')
     y_train1 = dataset1['affNISTdata']['label_int']
     X_train1 = dataset1['affNISTdata']['image'].transpose()
 
     X_train = np.vstack((X_train, X_train1))
     y_train = np.hstack((y_train, y_train1))
 
-dataset = loadmat('16.mat')
+dataset = loadmat('../data/16.mat')
 y_test = dataset['affNISTdata']['label_int']
 X_test = dataset['affNISTdata']['image'].transpose()
 
@@ -48,7 +48,7 @@ np.random.seed(1337)  # for reproducibility
 
 batch_size = 128
 nb_classes = 10
-nb_epoch = 12
+nb_epoch = 1
 
 # input image dimensions
 img_rows, img_cols = 40, 40
@@ -101,8 +101,8 @@ model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch,
 score = model.evaluate(X_test, Y_test, show_accuracy=True, verbose=0)
 
 f = open('report.txt', 'w')
-f.write('Test score:', score[0])
-f.write('Test accuracy:', score[1])
+f.write('Test score: {}'.format(score[0]))
+f.write('Test accuracy: {}'.format(score[1]))
 f.close()
 
 
