@@ -12,7 +12,7 @@ print(theano.config.device)
 
 import numpy as np
 from affnist_read import loadmat
-from tqdm import trange
+from tqdm import trange, tqdm
 
 from img_handler import downsize
 
@@ -110,10 +110,13 @@ f.close()
 with open('test.csv', 'r') as f:
     reader = csv.reader(f)
     raw_nums = list(reader)
-    test_set = [np.array([int(x) for x in y]) for y in raw_nums[1:]]
-testX = []
-for i, x in enumerate(test_set):
-    testX.append(downsize(x, 28, 40))
+    test_set = [np.array([float(x) for x in y]) for y in raw_nums[1:]]
+
+testX = downsize(test_set[0], 28, 40).flatten()
+for x in tqdm(test_set[1:]):
+    y = downsize(x, 28, 40).flatten()
+    testX = np.vstack((testX, y))
+testX = testX.reshape(testX.shape[0], 1, img_rows, img_cols)
 
 # Save Model
 json_string = model.to_json()
