@@ -48,7 +48,7 @@ np.random.seed(1337)  # for reproducibility
 
 batch_size = 128
 nb_classes = 10
-nb_epoch = 1
+nb_epoch = 3
 
 # input image dimensions
 img_rows, img_cols = 40, 40
