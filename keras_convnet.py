@@ -1,4 +1,4 @@
-import csv
+import csv, json
 # from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation, Flatten
@@ -23,7 +23,7 @@ dataset = loadmat('1.mat')
 y_train = dataset['affNISTdata']['label_int']
 X_train = dataset['affNISTdata']['image'].transpose()
 
-for i in trange(8):
+for i in trange(15):
     dataset1 = loadmat(str(i+1) + '.mat')
     y_train1 = dataset1['affNISTdata']['label_int']
     X_train1 = dataset1['affNISTdata']['image'].transpose()
@@ -115,6 +115,12 @@ testX = []
 for i, x in enumerate(test_set):
     testX.append(downsize(x, 28, 40))
 
+# Save Model
+json_string = model.to_json()
+with open('model-shape.txt', 'w') as outfile:
+    json.dump(json_string, outfile)
+
+model.save_weights('my_model_weights.h5')
 
 # Output Kaggle guess list
 testY = model.predict_classes(testX, verbose=2)
