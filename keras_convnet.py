@@ -123,7 +123,7 @@ json_string = model.to_json()
 with open('model-shape.txt', 'w') as outfile:
     json.dump(json_string, outfile)
 
-model.save_weights('my_model_weights.h5')
+model.save_weights('my_model_weights.h5', overwrite=True)
 
 # Output Kaggle guess list
 testY = model.predict_classes(testX, verbose=2)
