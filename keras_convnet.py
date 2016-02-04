@@ -1,5 +1,5 @@
 import csv, json
-# from keras.datasets import mnist
+from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
@@ -8,7 +8,7 @@ from keras.utils import np_utils
 import pandas as pd
 
 import theano
-print(theano.config.device)
+
 
 import numpy as np
 from affnist_read import loadmat
@@ -17,23 +17,23 @@ from tqdm import trange, tqdm
 from img_handler import downsize
 
 
-# (X_train, y_train), (X_test, y_test) = mnist.load_data()
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
 
-dataset = loadmat('../data/1.mat')
-y_train = dataset['affNISTdata']['label_int']
-X_train = dataset['affNISTdata']['image'].transpose()
+# dataset = loadmat('../data/1.mat')
+# y_train = dataset['affNISTdata']['label_int']
+# X_train = dataset['affNISTdata']['image'].transpose()
 
-for i in trange(15):
-    dataset1 = loadmat('../data/' + str(i+1) + '.mat')
-    y_train1 = dataset1['affNISTdata']['label_int']
-    X_train1 = dataset1['affNISTdata']['image'].transpose()
+# for i in trange(15):
+#     dataset1 = loadmat('../data/' + str(i+1) + '.mat')
+#     y_train1 = dataset1['affNISTdata']['label_int']
+#     X_train1 = dataset1['affNISTdata']['image'].transpose()
 
-    X_train = np.vstack((X_train, X_train1))
-    y_train = np.hstack((y_train, y_train1))
+#     X_train = np.vstack((X_train, X_train1))
+#     y_train = np.hstack((y_train, y_train1))
 
-dataset = loadmat('../data/16.mat')
-y_test = dataset['affNISTdata']['label_int']
-X_test = dataset['affNISTdata']['image'].transpose()
+# dataset = loadmat('../data/16.mat')
+# y_test = dataset['affNISTdata']['label_int']
+# X_test = dataset['affNISTdata']['image'].transpose()
 
 '''Train a simple convnet on the MNIST dataset.
 Run on GPU: THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python mnist_cnn.py
@@ -43,15 +43,15 @@ Get to 99.25% test accuracy after 12 epochs (there is still a lot of margin for 
 
 import os
 os.environ['THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32'
-
+print(theano.config.device)
 np.random.seed(1337)  # for reproducibility
 
 batch_size = 128
 nb_classes = 10
-nb_epoch = 3
+nb_epoch = 1
 
 # input image dimensions
-img_rows, img_cols = 40, 40
+img_rows, img_cols = 28, 28
 # number of convolutional filters to use
 nb_filters = 32
 # size of pooling area for max pooling
@@ -78,13 +78,14 @@ Y_test = np_utils.to_categorical(y_test, nb_classes)
 
 model = Sequential()
 
-model.add(Convolution2D(nb_filters, nb_conv, nb_conv,
+model.add(Convolution2D(8, 5, 5,
                         border_mode='valid',
                         input_shape=(1, img_rows, img_cols)))
 model.add(Activation('relu'))
-model.add(Convolution2D(nb_filters, nb_conv, nb_conv))
-model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(nb_pool, nb_pool)))
+model.add(Convolution2D(16, 5, 5))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(3, 3)))
 model.add(Dropout(0.25))
 
 model.add(Flatten())
@@ -96,34 +97,33 @@ model.add(Activation('softmax'))
 
 model.compile(loss='categorical_crossentropy', optimizer='adadelta')
 
-model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch,
-          show_accuracy=True, verbose=1, validation_data=(X_test, Y_test))
-score = model.evaluate(X_test, Y_test, show_accuracy=True, verbose=0)
+# model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch,
+#           show_accuracy=True, verbose=1, validation_data=(X_test, Y_test))
+# score = model.evaluate(X_test, Y_test, show_accuracy=True, verbose=0)
 
-f = open('report.txt', 'w')
-f.write('Test score: {}'.format(score[0]))
-f.write('Test accuracy: {}'.format(score[1]))
-f.close()
+# f = open('report.txt', 'w')
+# f.write('Test score: {}'.format(score[0]))
+# f.write('Test accuracy: {}'.format(score[1]))
+# f.close()
 
-
+# model.save_weights('my_model_weights.h5', overwrite=True)
 # parse Kaggle test set data
 with open('test.csv', 'r') as f:
     reader = csv.reader(f)
     raw_nums = list(reader)
     test_set = [np.array([float(x) for x in y]) for y in raw_nums[1:]]
 
-testX = downsize(test_set[0], 28, 40).flatten()
+testX = test_set[0]
 for x in tqdm(test_set[1:]):
-    y = downsize(x, 28, 40).flatten()
-    testX = np.vstack((testX, y))
+    testX = np.vstack((testX, x))
 testX = testX.reshape(testX.shape[0], 1, img_rows, img_cols)
 
-# Save Model
-json_string = model.to_json()
-with open('model-shape.txt', 'w') as outfile:
-    json.dump(json_string, outfile)
+model.load_weights('my_model_weights.h5')
 
-model.save_weights('my_model_weights.h5', overwrite=True)
+# # Save Model
+# json_string = model.to_json()
+# with open('model-shape.txt', 'w') as outfile:
+#     json.dump(json_string, outfile)
 
 # Output Kaggle guess list
 testY = model.predict_classes(testX, verbose=2)
