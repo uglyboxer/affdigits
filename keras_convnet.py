@@ -19,26 +19,66 @@ from tqdm import trange, tqdm
 
 from img_handler import downsize
 
+np.random.seed(1337)  # for reproducibility
+
+batch_size = 128
+nb_classes = 10
+nb_epoch = 10
+
+# input image dimensions
+img_rows, img_cols = 40, 40
+# number of convolutional filters to use
+nb_filters = 32
+# size of pooling area for max pooling
+nb_pool = 2
+# convolution kernel size
+nb_conv = 3
+
+
+
+model = Sequential()
+
+model.add(Convolution2D(20, nb_conv, nb_conv,
+                        border_mode='valid',
+                        input_shape=(1, img_rows, img_cols)))
+model.add(Activation('relu'))
+model.add(Convolution2D(60, nb_conv, nb_conv))
+model.add(Activation('relu'))
+model.add(Convolution2D(120, nb_conv, nb_conv))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(nb_pool, nb_pool)))
+model.add(Dropout(0.25))
+
+model.add(Flatten())
+model.add(Dense(150))
+model.add(Activation('relu'))
+model.add(Dropout(0.5))
+model.add(Dense(nb_classes))
+model.add(Activation('softmax'))
+# EarlyStopping(monitor='val_loss')
+
+model.compile(loss='categorical_crossentropy', optimizer='adadelta')
+
 
 # (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
-dataset = loadmat('../data2/1.mat')
+dataset = loadmat('../data3/1.mat')
 y_train = dataset['affNISTdata']['label_int']
 X_train = dataset['affNISTdata']['image'].transpose()
 
-for i in trange(19):
-    dataset1 = loadmat('../data2/' + str(i+2) + '.mat')
+for i in trange(15):
+    dataset1 = loadmat('../data3/' + str(i+2) + '.mat')
     y_train1 = dataset1['affNISTdata']['label_int']
     X_train1 = dataset1['affNISTdata']['image'].transpose()
 
     X_train = np.vstack((X_train, X_train1))
     y_train = np.hstack((y_train, y_train1))
 
-dataset = loadmat('../data2/28.mat')
+dataset = loadmat('../data3/28.mat')
 y_test = dataset['affNISTdata']['label_int']
 X_test = dataset['affNISTdata']['image'].transpose()
 for i in trange(3):
-    dataset1 = loadmat('../data2/' + str(i+29) + '.mat')
+    dataset1 = loadmat('../data3/' + str(i+29) + '.mat')
     y_test1 = dataset1['affNISTdata']['label_int']
     X_test1 = dataset1['affNISTdata']['image'].transpose()
 
@@ -59,21 +99,6 @@ def padwithtens(vector, pad_width, iaxis, kwargs):
     vector[-pad_width[1]:] = 0
     return vector
 
-np.random.seed(1337)  # for reproducibility
-
-batch_size = 128
-nb_classes = 10
-nb_epoch = 17
-
-# input image dimensions
-img_rows, img_cols = 40, 40
-# number of convolutional filters to use
-nb_filters = 32
-# size of pooling area for max pooling
-nb_pool = 2
-# convolution kernel size
-nb_conv = 3
-
 
 X_train = X_train.reshape(X_train.shape[0], 1, img_rows, img_cols)
 X_test = X_test.reshape(X_test.shape[0], 1, img_rows, img_cols)
@@ -89,29 +114,8 @@ print(X_test.shape[0], 'test samples')
 Y_train = np_utils.to_categorical(y_train, nb_classes)
 Y_test = np_utils.to_categorical(y_test, nb_classes)
 
-model = Sequential()
-
-model.add(Convolution2D(20, nb_conv, nb_conv,
-                        border_mode='valid',
-                        input_shape=(1, img_rows, img_cols)))
-model.add(Activation('relu'))
-model.add(Convolution2D(60, nb_conv, nb_conv))
-model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(nb_pool, nb_pool)))
-model.add(Dropout(0.25))
-
-model.add(Flatten())
-model.add(Dense(150))
-model.add(Activation('relu'))
-model.add(Dropout(0.5))
-model.add(Dense(nb_classes))
-model.add(Activation('softmax'))
-EarlyStopping(monitor='val_loss')
-
-model.compile(loss='categorical_crossentropy', optimizer='adadelta')
-
 model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch,
-          show_accuracy=True, verbose=1, validation_data=(X_test, Y_test))
+          show_accuracy=True, verbose=1, validation_data=(X_test, Y_test), callbacks=[EarlyStopping(monitor='val_loss')])
 score = model.evaluate(X_test, Y_test, show_accuracy=True, verbose=0)
 
 f = open('report.txt', 'w')
