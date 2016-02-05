@@ -130,13 +130,18 @@ with open('test.csv', 'r') as f:
     raw_nums = list(reader)
     test_set = [np.array([float(x) for x in y]) for y in raw_nums[1:]]
 
+
 # testX = downsize(test_set[0], 28, 40).flatten()
-testX = pad(test_set[0], 6, padwithtens).flatten() 
+testX = test_set[0].reshape(28, 28)
+testX = [pad(testX, 6, padwithtens).flatten()]
 for x in tqdm(test_set[1:]):
     # y = downsize(x, 28, 40).flatten()
-    y = pad(x, 6, padwithtens).flatten() 
-    testX = np.vstack((testX, y))
-testX = testX.reshape(testX.shape[0], 1, img_rows, img_cols)
+    y = x.reshape(28, 28)
+    y = pad(y, 6, padwithtens).flatten() 
+    testX.append(y)
+length = len(testX)
+testX = np.array(testX)
+testX = testX.reshape(length, 1, img_rows, img_cols)
 
 # Save Model
 # json_string = model.to_json()
@@ -149,3 +154,4 @@ testX = testX.reshape(testX.shape[0], 1, img_rows, img_cols)
 testY = model.predict_classes(testX, verbose=2)
 
 pd.DataFrame({"ImageId": list(range(1,len(testY)+1)), "Label": testY}).to_csv('submission.csv', index=False, header=True)
+
