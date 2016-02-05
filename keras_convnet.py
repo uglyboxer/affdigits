@@ -22,23 +22,23 @@ from img_handler import downsize
 
 # (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
-dataset = loadmat('../data/1.mat')
+dataset = loadmat('../data2/1.mat')
 y_train = dataset['affNISTdata']['label_int']
 X_train = dataset['affNISTdata']['image'].transpose()
 
 for i in trange(19):
-    dataset1 = loadmat('../data/' + str(i+2) + '.mat')
+    dataset1 = loadmat('../data2/' + str(i+2) + '.mat')
     y_train1 = dataset1['affNISTdata']['label_int']
     X_train1 = dataset1['affNISTdata']['image'].transpose()
 
     X_train = np.vstack((X_train, X_train1))
     y_train = np.hstack((y_train, y_train1))
 
-dataset = loadmat('../data/28.mat')
+dataset = loadmat('../data2/28.mat')
 y_test = dataset['affNISTdata']['label_int']
 X_test = dataset['affNISTdata']['image'].transpose()
 for i in trange(3):
-    dataset1 = loadmat('../data/' + str(i+29) + '.mat')
+    dataset1 = loadmat('../data2/' + str(i+29) + '.mat')
     y_test1 = dataset1['affNISTdata']['label_int']
     X_test1 = dataset1['affNISTdata']['image'].transpose()
 
