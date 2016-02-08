@@ -74,6 +74,22 @@ for i in trange(15):
     X_train = np.vstack((X_train, X_train1))
     y_train = np.hstack((y_train, y_train1))
 
+
+with open('train.csv', 'r') as f:
+    reader = csv.reader(f)
+    t = list(reader)
+    train = [[int(x) for x in y] for y in t[1:]]
+
+ans_train = [x[0] for x in train]
+train_set = [x[1:] for x in train]
+ans_train.pop(0)
+train_set.pop(0)
+ans_train = np.array(ans_train)
+train_set = np.array(train_set)
+X_train = np.vstack(X_train, train_set)
+y_train = np.vstack(y_train, ans_train)
+
+
 dataset = loadmat('../data3/28.mat')
 y_test = dataset['affNISTdata']['label_int']
 X_test = dataset['affNISTdata']['image'].transpose()
@@ -84,6 +100,9 @@ for i in trange(3):
 
     X_test = np.vstack((X_test, X_test1))
     y_test = np.hstack((y_test, y_test1))
+
+
+
 '''Train a simple convnet on the MNIST dataset.
 Run on GPU: THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python mnist_cnn.py
 Get to 99.25% test accuracy after 12 epochs (there is still a lot of margin for parameter tuning).
@@ -98,6 +117,8 @@ def padwithtens(vector, pad_width, iaxis, kwargs):
     vector[:pad_width[0]] = 0
     vector[-pad_width[1]:] = 0
     return vector
+
+
 
 
 X_train = X_train.reshape(X_train.shape[0], 1, img_rows, img_cols)
