@@ -35,6 +35,10 @@ nb_pool = 2
 nb_conv = 3
 
 
+def padwithtens(vector, pad_width, iaxis, kwargs):
+    vector[:pad_width[0]] = 0
+    vector[-pad_width[1]:] = 0
+    return vector
 
 model = Sequential()
 
@@ -74,21 +78,34 @@ for i in trange(15):
     X_train = np.vstack((X_train, X_train1))
     y_train = np.hstack((y_train, y_train1))
 
-
+print("Loading orig values")
 with open('train.csv', 'r') as f:
     reader = csv.reader(f)
     t = list(reader)
     train = [[int(x) for x in y] for y in t[1:]]
+train.pop(0)
 
-ans_train = [x[0] for x in train]
-train_set = [x[1:] for x in train]
-ans_train.pop(0)
-train_set.pop(0)
-ans_train = np.array(ans_train)
-train_set = np.array(train_set)
-X_train = np.vstack(X_train, train_set)
-y_train = np.vstack(y_train, ans_train)
 
+ans_train = np.array([x[0] for x in train])
+train_set = [np.array(x[1:]) for x in train]
+
+
+trainX = train_set[0].reshape(28, 28)
+trainX = [pad(trainX, 6, padwithtens).flatten()]
+# testX = [zeroStack(testX).flatten()]
+for x in tqdm(train_set[1:]):
+    y = x.reshape(28, 28)
+    y = pad(y, 6, padwithtens).flatten()
+    trainX.append(y)
+length = len(trainX)
+trainX = np.array(trainX)
+# trainX = trainX.reshape(length, 1, img_rows, img_cols)
+print("shape of new samples")
+print(trainX.shape)
+X_train = np.vstack((X_train, trainX))
+y_train = np.hstack((y_train, ans_train))
+
+print("stacked")
 
 dataset = loadmat('../data3/28.mat')
 y_test = dataset['affNISTdata']['label_int']
@@ -111,12 +128,6 @@ Get to 99.25% test accuracy after 12 epochs (there is still a lot of margin for 
 
 import os
 os.environ['THEANO_FLAGS'] = 'mode=FAST_RUN,device=gpu,floatX=float32'
-
-
-def padwithtens(vector, pad_width, iaxis, kwargs):
-    vector[:pad_width[0]] = 0
-    vector[-pad_width[1]:] = 0
-    return vector
 
 
 
