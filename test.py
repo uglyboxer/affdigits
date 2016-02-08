@@ -42,6 +42,19 @@ def padwithtens(vector, pad_width, iaxis, kwargs):
     vector[-pad_width[1]:] = 0
     return vector
 
+
+def zeroStack(vector):
+    top = np.zeros((3, 28))
+    bottom = np.zeros((9, 28))
+    left = np.zeros((40, 8))
+    right = np.zeros((40, 4))
+    vector = np.vstack((top, vector))
+    vector = np.vstack((vector, bottom))
+    vector = np.hstack((left, vector))
+    vector = np.hstack((vector, right))
+    return vector
+
+
 model = Sequential()
 
 model.add(Convolution2D(20, nb_conv, nb_conv,
@@ -70,19 +83,22 @@ model.load_weights('my_model_weights1.h5')
 with open('test.csv', 'r') as f:
     reader = csv.reader(f)
     raw_nums = list(reader)
-    test_set = [np.array([float(x) for x in y]) for y in raw_nums[1:]]
+    test_set = [np.array([x for x in y]).astype('float32') for y in raw_nums[1:]]
 
 # testX = downsize(test_set[0], 28, 40).flatten()
 testX = test_set[0].reshape(28, 28)
-testX = [pad(testX, 6, padwithtens).flatten()]
+# testX = [pad(testX, 6, padwithtens).flatten()]
+testX = [zeroStack(testX).flatten()]
 for x in tqdm(test_set[1:]):
     # y = downsize(x, 28, 40).flatten()
     y = x.reshape(28, 28)
-    y = pad(y, 6, padwithtens).flatten() 
+    # y = pad(y, 6, padwithtens).flatten() 
+    y = zeroStack(y).flatten()
     testX.append(y)
 length = len(testX)
 testX = np.array(testX)
 testX = testX.reshape(length, 1, img_rows, img_cols)
+testX /= 255
 
 # Output Kaggle guess list
 testY = model.predict_classes(testX, verbose=2)
